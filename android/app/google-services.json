@@ -1,0 +1,29 @@
+{
+      "project_info": {
+          "project_number": "726035575772",
+              "project_id": "janbak-delivery",
+                  "storage_bucket": "janbak-delivery.firebasestorage.app"
+                    },
+                      "client": [
+                          {
+                                "client_info": {
+                                        "mobilesdk_app_id": "1:726035575772:android:944140ccd33811c787d519",
+                                                "android_client_info": {
+                                                          "package_name": "com.janbak.delivery"
+                                                                  }
+                                                                        },
+                                                                              "oauth_client": [],
+                                                                                    "api_key": [
+                                                                                            {
+                                                                                                      "current_key": "AIzaSyDvRAl7FRUqdtn-I-Ppld0Xuuos1YKZsvw"
+                                                                                                              }
+                                                                                                                    ],
+                                                                                                                          "services": {
+                                                                                                                                  "appinvite_service": {
+                                                                                                                                            "other_platform_oauth_client": []
+                                                                                                                                                    }
+                                                                                                                                                          }
+                                                                                                                                                              }
+                                                                                                                                                                ],
+                                                                                                                                                                  "configuration_version": "1"
+                                                                                                                                                                  }
