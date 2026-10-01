@@ -1,4 +1,4 @@
-name: Build Flutter APK
+name: Build and Release APK
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -29,9 +32,12 @@ jobs:
       - name: Build APK Release
         run: flutter build apk --release --android-skip-build-dependency-validation
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release and Upload APK
+        uses: softprops/action-gh-release@v2
         with:
-          name: janbak-delivery-app
-          path: build/app/outputs/flutter-apk/app-release.apk
-          if-no-files-found: error
+          tag_name: v1.0.${{ github.run_number }}
+          name: "Janbak Delivery App v1.0.${{ github.run_number }}"
+          files: build/app/outputs/flutter-apk/app-release.apk
+          body: "نسخة جديدة جاهزة للتثبيت المباشر لتطبيق جنبك."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
