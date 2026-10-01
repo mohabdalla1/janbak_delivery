@@ -1,40 +1,40 @@
-name: janbak_delivery
-description: "A professional delivery and services application - Janbak"
-publish_to: "none"
-version: 1.0.0+1
+name: Build Flutter APK
 
-environment:
-  sdk: ^3.5.0
+on:
+  push:
+    branches: [ "main" ]
 
-dependencies:
-  flutter:
-    sdk: flutter
-  flutter_localizations:
-    sdk: flutter
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-  # الخرائط المجانية ومفتوحة المصدر
-  flutter_map: ^7.0.2
-  latlong2: ^0.9.0
+    steps:
+      - uses: actions/checkout@v4
 
-  # إدارة الحالة والربط
-  provider: ^6.1.2
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-  # جلب الخطوط من جوجل
-  google_fonts: ^6.2.1
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          cache: true
 
-  # حزم فايربيس الأساسية للتطبيق
-  firebase_core: ^3.0.0
-  firebase_auth: ^5.0.0
-  cloud_firestore: ^5.0.0
-  firebase_messaging: ^15.0.0
+      - name: Clean old lockfile
+        run: rm -f pubspec.lock
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
-  flutter_launcher_icons: "^0.13.1"
+      - name: Get Dependencies
+        run: flutter pub get
 
-flutter:
-  uses-material-design: true
-  assets:
-    - assets/images/logo.png
+      - name: Build APK Release
+        run: flutter build apk --release --android-skip-build-dependency-validation
+
+      - name: Upload Direct APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
