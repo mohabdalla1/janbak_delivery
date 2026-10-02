@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/theme/app_theme.dart';
-import 'login_screen.dart'; // تم تصحيح المسار ليكون في نفس المجلد أو الاستيراد المناسب
+import 'login_screen.dart';
+import 'merchant_products_screen.dart'; // شاشة إدارة المنتجات
+import 'merchant_orders_screen.dart';   // شاشة الطلبات الواردة الكاملة
 
 class MerchantDashboardScreen extends StatefulWidget {
   const MerchantDashboardScreen({super.key});
@@ -76,10 +78,50 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // أزرار التنقل السريع (إدارة المنتجات والطلبات الواردة)
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MerchantProductsScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    label: const Text('إدارة المنتجات'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MerchantOrdersScreen()),
+                      );
+                    },
+                    icon: const Icon(Icons.list_alt_rounded),
+                    label: const Text('كل الطلبات'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             
             const Text(
-              'الطلبات الواردة من العملاء',
+              'الطلبات الواردة الحديثة',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
@@ -133,7 +175,7 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween, // تم التعديل هنا
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'طلب رقم: ${orderId.substring(0, 6).toUpperCase()}',
@@ -165,7 +207,6 @@ class _MerchantDashboardScreenState extends State<MerchantDashboardScreen> {
                                 children: [
                                   OutlinedButton.icon(
                                     onPressed: () {
-                                      // تحديث حالة الطلب في Firestore إلى "جاري التجهيز"
                                       FirebaseFirestore.instance.collection('orders').doc(orderId).update({
                                         'status': 'جاري التجهيز',
                                       });
