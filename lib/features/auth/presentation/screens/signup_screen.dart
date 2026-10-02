@@ -122,7 +122,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: selectedCity,
+                initialValue: selectedCity,
                 decoration: InputDecoration(
                   labelText: 'المدينة',
                   prefixIcon: const Icon(Icons.location_city_rounded),
@@ -140,7 +140,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: selectedRole,
+                initialValue: selectedRole,
                 decoration: InputDecoration(
                   labelText: 'نوع الحساب (الدور)',
                   prefixIcon: const Icon(Icons.badge_outlined),
@@ -269,8 +269,8 @@ class _SignupScreenState extends State<SignupScreen> {
     } on FirebaseAuthException catch (e) {
       setState(() => isLoading = false);
       String message = 'حدث خطأ أثناء إنشاء الحساب';
-      if (e.code == 'weak-password') message = 'كلمة المرور ضعيفة جداً';
-      else if (e.code == 'email-already-in-use') message = 'البريد الإلكتروني مستخدم مسبقاً';
+      if (e.code == 'weak-password') {message = 'كلمة المرور ضعيفة جداً';}
+      else if (e.code == 'email-already-in-use'){ message = 'البريد الإلكتروني مستخدم مسبقاً';}
       
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
     } catch (e) {

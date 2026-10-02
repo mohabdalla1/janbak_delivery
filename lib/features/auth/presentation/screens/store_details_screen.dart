@@ -108,7 +108,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                   child: Icon(
                     Icons.storefront_rounded,
                     size: 80,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                   ),
                 ),
               ),

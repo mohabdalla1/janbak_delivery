@@ -70,7 +70,7 @@ class _CompleteMerchantProfileScreenState extends State<CompleteMerchantProfileS
 
               // قائمة منسدلة للنشاط التجاري
               DropdownButtonFormField<String>(
-                value: selectedActivity,
+                initialValue: selectedActivity,
                 decoration: InputDecoration(
                   labelText: 'نوع النشاط التجاري',
                   prefixIcon: const Icon(Icons.category_rounded),

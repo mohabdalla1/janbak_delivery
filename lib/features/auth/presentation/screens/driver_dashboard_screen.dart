@@ -193,7 +193,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> with Sing
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.blue),
                   ),
@@ -335,7 +335,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> with Sing
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.electric_scooter_outlined, size: 60, color: AppTheme.textGrey.withOpacity(0.5)),
+          Icon(Icons.electric_scooter_outlined, size: 60, color: AppTheme.textGrey.withValues(alpha: 0.5)),
           const SizedBox(height: 12),
           Text(
             message,

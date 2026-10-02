@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+
 import '../../../../core/theme/app_theme.dart';
 
 class LocationPickerScreen extends StatefulWidget {
@@ -13,8 +14,8 @@ class LocationPickerScreen extends StatefulWidget {
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   // مركز خريطة حلفا الجديدة الافتراضي
   final MapController _mapController = MapController();
+
   LatLng _selectedLocation = const LatLng(15.3215, 35.5833);
-  bool _isLoadingLocation = false;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +32,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               initialCenter: _selectedLocation,
               initialZoom: 15.0,
               onPositionChanged: (position, hasGesture) {
-                if (hasGesture && position.center != null) {
+                if (hasGesture) {
                   setState(() {
                     _selectedLocation = position.center;
                   });
@@ -46,7 +47,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ],
           ),
 
-          // دبوس ثابت في منتصف الخريطة لتحديد الموقع بدقة عند التحريك
+          // دبوس ثابت في منتصف الخريطة
           const Center(
             child: Padding(
               padding: EdgeInsets.only(bottom: 35),
@@ -58,22 +59,30 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
           ),
 
-          // زر العودة للموقع الحالي في حلفا الجديدة
+          // زر العودة إلى الموقع الافتراضي في حلفا الجديدة
           Positioned(
             top: 16,
             right: 16,
             child: FloatingActionButton(
               mini: true,
               backgroundColor: Colors.white,
-              child: const Icon(Icons.my_location, color: AppTheme.primaryColor),
               onPressed: () {
-                // إعادة التمركز على وسط حلفا الجديدة
-                _mapController.move(const LatLng(15.3215, 35.5833), 15.0);
+                const defaultLocation = LatLng(15.3215, 35.5833);
+
+                _mapController.move(defaultLocation, 15.0);
+
+                setState(() {
+                  _selectedLocation = defaultLocation;
+                });
               },
+              child: const Icon(
+                Icons.my_location,
+                color: AppTheme.primaryColor,
+              ),
             ),
           ),
 
-          // لوحة سفلية لتأكيد الموقع المختاره
+          // لوحة سفلية لتأكيد الموقع المختار
           Positioned(
             bottom: 24,
             left: 24,
@@ -85,7 +94,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -97,22 +106,30 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 children: [
                   const Text(
                     'موقع التوصيل المحدد',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'خط العرض: ${_selectedLocation.latitude.toStringAsFixed(4)} ، خط الطول: ${_selectedLocation.longitude.toStringAsFixed(4)}',
-                    style: const TextStyle(color: AppTheme.textGrey, fontSize: 13),
+                    'خط العرض: ${_selectedLocation.latitude.toStringAsFixed(4)}، '
+                    'خط الطول: ${_selectedLocation.longitude.toStringAsFixed(4)}',
+                    style: const TextStyle(
+                      color: AppTheme.textGrey,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // إرجاع الإحداثيات للشاشة السابقة أو متابعة الطلب
                         Navigator.pop(context, _selectedLocation);
                       },
-                      child: const Text('تأكيد هذا الموقع وا متابعة الطلب'),
+                      child: const Text(
+                        'تأكيد هذا الموقع ومتابعة الطلب',
+                      ),
                     ),
                   ),
                 ],

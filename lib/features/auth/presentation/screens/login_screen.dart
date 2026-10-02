@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import 'app_dashboards.dart';
 import 'signup_screen.dart';
@@ -15,6 +16,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -28,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() async {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -36,70 +38,101 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // 1. تسجيل الدخول عبر فايربيس أثنتيكيشن
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       final user = userCredential.user;
-      if (user != null) {
-        // 2. جلب دور المستخدم من قاعدة البيانات (Firestore) لتوجيهه للوحة المناسبة
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
 
+      if (user == null) {
         if (!mounted) return;
 
-        if (userDoc.exists) {
-          String role = userDoc.get('role') ?? 'customer';
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر تسجيل الدخول، حاول مرة أخرى'),
+            backgroundColor: Colors.red,
+          ),
+        );
 
-          // التوجيه بناءً على الدور
-          Widget destination;
-          if (role == 'merchant') {
-            destination = const MerchantDashboardScreen();
-          } else if (role == 'driver') {
-            destination = const DriverDashboardScreen();
-          } else {
-            destination = const MerchantDashboardScreen(); // أو واجهة العميل الافتراضية
-          }
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => destination),
-          );
-        } else {
-          // إذا لم يتم العثور على مستند المستخدم، نوجهه للوحة التاجر الافتراضية
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MerchantDashboardScreen()),
-          );
-        }
+        return;
       }
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!mounted) return;
+
+      Widget destination;
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+
+        final role = userData?['role']?.toString() ?? 'customer';
+
+        if (role == 'merchant') {
+          destination = const MerchantDashboardScreen();
+        } else if (role == 'driver') {
+          destination = const DriverDashboardScreen();
+        } else {
+          // يمكنك استبدالها بواجهة العميل عند إنشائها
+          destination = const MerchantDashboardScreen();
+        }
+      } else {
+        // في حال عدم وجود مستند للمستخدم
+        destination = const MerchantDashboardScreen();
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => destination,
+        ),
+      );
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
       String message = 'حدث خطأ أثناء تسجيل الدخول';
+
       if (e.code == 'user-not-found') {
         message = 'لا يوجد حساب بهذا البريد الإلكتروني';
-      } else if (e.code == 'wrong-password') {
-        message = 'كلمة المرور غير صحيحة';
+      } else if (e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        message = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
       } else if (e.code == 'invalid-email') {
         message = 'البريد الإلكتروني غير صالح';
+      } else if (e.code == 'user-disabled') {
+        message = 'تم تعطيل هذا الحساب';
+      } else if (e.code == 'too-many-requests') {
+        message = 'تمت محاولات كثيرة، حاول مرة أخرى لاحقاً';
+      } else if (e.code == 'network-request-failed') {
+        message = 'تأكد من اتصالك بالإنترنت';
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطأ: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('حدث خطأ: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -117,16 +150,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // شعار التطبيق بدلاً من الأيقونة القديمة
                   Center(
                     child: Image.asset(
-                      'assets/images/logo.png', // مسار الشعار الذي قمت بإضافته
+                      'assets/images/logo.png',
                       height: 100,
                       width: 100,
                       fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 16),
+
                   const Text(
                     'أهلاً بك في جنبك',
                     textAlign: TextAlign.center,
@@ -137,6 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+
                   const Text(
                     'سجل الدخول للمتابعة إلى حسابك',
                     textAlign: TextAlign.center,
@@ -147,10 +181,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // حقل البريد الإلكتروني
                   TextFormField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: 'البريد الإلكتروني',
                       prefixIcon: const Icon(Icons.email_outlined),
@@ -159,27 +193,36 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'الرجاء إدخال البريد الإلكتروني';
                       }
+
                       if (!value.contains('@')) {
                         return 'البريد الإلكتروني غير صالح';
                       }
+
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // حقل كلمة المرور
                   TextFormField(
                     controller: passwordController,
                     obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) {
+                      if (!isLoading) {
+                        _login();
+                      }
+                    },
                     decoration: InputDecoration(
                       labelText: 'كلمة المرور',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                         ),
                         onPressed: () {
                           setState(() {
@@ -195,33 +238,37 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (value == null || value.isEmpty) {
                         return 'الرجاء إدخال كلمة المرور';
                       }
+
                       if (value.length < 6) {
                         return 'كلمة المرور يجب ألا تقل عن 6 أحرف';
                       }
+
                       return null;
                     },
                   ),
                   const SizedBox(height: 8),
 
-                  // نسيت كلمة المرور
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const ForgotPasswordScreen(),
+                          ),
                         );
                       },
                       child: const Text(
                         'هل نسيت كلمة المرور؟',
-                        style: TextStyle(color: AppTheme.primaryColor),
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // زر تسجيل الدخول
                   SizedBox(
                     height: 50,
                     child: ElevatedButton(
@@ -233,7 +280,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       child: isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
                           : const Text(
                               'تسجيل الدخول',
                               style: TextStyle(
@@ -246,7 +300,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // الانتقال إلى شاشة إنشاء حساب جديد
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -255,11 +308,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const SignupScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const SignupScreen(),
+                            ),
                           );
                         },
                         child: const Text(
-                          'سجل الان',
+                          'سجل الآن',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryColor,

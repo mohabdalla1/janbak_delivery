@@ -120,7 +120,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.my_location_rounded, color: AppTheme.primaryColor, size: 20),
@@ -247,7 +247,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                     contentPadding: const EdgeInsets.all(12),
                                     leading: CircleAvatar(
                                       radius: 26,
-                                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                                       child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryColor),
                                     ),
                                     title: Text(
@@ -319,7 +319,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primaryColor : AppTheme.primaryColor.withOpacity(0.1),
+              color: isSelected ? AppTheme.primaryColor : AppTheme.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

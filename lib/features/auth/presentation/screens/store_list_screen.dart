@@ -51,7 +51,7 @@ class StoreListScreen extends StatelessWidget {
             child: ListTile(
               contentPadding: const EdgeInsets.all(16.0),
               leading: CircleAvatar(
-                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                 child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryColor),
               ),
               title: Text(
