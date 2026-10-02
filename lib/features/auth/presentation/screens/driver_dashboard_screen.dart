@@ -90,7 +90,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> with Sing
       child: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('orders')
-            .where('status', whereIn: ['جاري التجهيز', 'جاهز للتوصيل'])
+            .where('status', whereIn: ['pending', 'جاري التجهيز', 'جاهز للتوصيل'])
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -157,13 +157,22 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> with Sing
 
   // تصميم بطاقة الطلب الموحدة مع خريطة الموقع
   Widget _buildOrderCard(String orderId, Map<String, dynamic> orderData, {required bool isAvailable}) {
-    final customerName = orderData['customerName'] ?? 'عميل جنبك';
-    final orderStatus = orderData['status'] ?? 'قيد التجهيز';
+    final customerEmail = orderData['customerEmail'] ?? 'عميل جنبك';
+    final orderStatus = orderData['status'] ?? 'pending';
     final totalPrice = orderData['totalPrice'] ?? '0';
     
-    // جلب الإحداثيات من بيانات الطلب (مع وضع إحداثيات افتراضية للتجربة في حال عدم توفرها)
-    final double lat = orderData['latitude'] ?? 15.5007; 
-    final double lng = orderData['longitude'] ?? 32.5599;
+    // استخراج الإحداثيات بشكل آمن سواء كانت مخزنة في Map باسم deliveryLocation أو بشكل مباشر
+    double lat = 15.3215; // إحداثيات افتراضية لوسط حلفا الجديدة
+    double lng = 35.5833;
+
+    if (orderData['deliveryLocation'] != null && orderData['deliveryLocation'] is Map) {
+      final locMap = orderData['deliveryLocation'] as Map<String, dynamic>;
+      lat = (locMap['latitude'] ?? 15.3215).toDouble();
+      lng = (locMap['longitude'] ?? 35.5833).toDouble();
+    } else {
+      lat = (orderData['latitude'] ?? 15.3215).toDouble();
+      lng = (orderData['longitude'] ?? 35.5833).toDouble();
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -196,15 +205,15 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> with Sing
               ],
             ),
             const Divider(height: 20),
-            Text('العميل: $customerName', style: const TextStyle(fontSize: 14)),
+            Text('العميل: $customerEmail', style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 4),
-            Text('المبلغ المطلوب: $totalPrice جنيه', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+            Text('المبلغ المطلوب: $totalPrice ج.س', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
             const SizedBox(height: 8),
 
             // زر عرض الخريطة وموقع التوصيل
             TextButton.icon(
               style: TextButton.styleFrom(padding: EdgeInsets.zero),
-              onPressed: () => _showOrderMap(context, lat, lng, customerName),
+              onPressed: () => _showOrderMap(context, lat, lng, customerEmail),
               icon: const Icon(Icons.map_rounded, color: Colors.blue, size: 18),
               label: const Text('عرض الموقع على الخريطة', style: TextStyle(color: Colors.blue)),
             ),
@@ -215,7 +224,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> with Sing
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (isAvailable && (orderStatus == 'جاري التجهيز' || orderStatus == 'جاهز للتوصيل'))
+                if (isAvailable && (orderStatus == 'pending' || orderStatus == 'جاري التجهيز' || orderStatus == 'جاهز للتوصيل'))
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
                     onPressed: () {
