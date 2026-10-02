@@ -29,6 +29,17 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
+      - name: Generate Keystore
+        run: |
+          keytool -genkey -v -keystore android/app/key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias key -keypass "${{ secrets.KEY_PASSWORD }}" -storepass "${{ secrets.KEY_PASSWORD }}" -dname "CN=anbak, OU=IT, O=Sudax, L=Halfa, ST=SD, C=SD"
+
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEY_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=key" >> android/key.properties
+          echo "storeFile=key.jks" >> android/key.properties
+
       - name: Build APK Release
         run: flutter build apk --release --android-skip-build-dependency-validation
 
@@ -38,6 +49,6 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: "Janbak Delivery App v1.0.${{ github.run_number }}"
           files: build/app/outputs/flutter-apk/app-release.apk
-          body: "نسخة جديدة جاهزة للتثبيت المباشر لتطبيق جنبك."
+          body: "نسخة جديدة موقعة وجاهزة للتثبيت المباشر لتطبيق جنبك."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
