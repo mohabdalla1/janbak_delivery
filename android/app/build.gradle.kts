@@ -1,19 +1,18 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    id("dev.flutter.flutter-gradle-plugin") // ضروري جداً لكي يتعرف Gradle على متغيرات flutter
+    id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.janbak.delivery"
+    namespace = "com.janbak.janbak_delivery" // تأكد أنه مطبق بالشكل الصحيح
     compileSdk = flutter.compileSdkVersion
     compileToolsVersion = flutter.buildToolsVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-        // تفعيل الـ Desugaring لحل مشكلة الإشعارات
-        isCoreLibraryDesugaringEnabled = true
+        isCoreLibraryDesugaringEnabled = true // تفعيل الـ Desugaring لحل مشكلة الإشعارات
     }
 
     kotlinOptions {
@@ -21,12 +20,12 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.janbak.delivery"
+        applicationId = "com.janbak.janbak_delivery"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
-        multiDexEnabled = true
+        multiDexEnabled = true // ضروري لتجنب أخطاء الـ dex
     }
 
     buildTypes {
@@ -38,6 +37,5 @@ android {
 }
 
 dependencies {
-    // إضافة مكتبة الـ Desugaring المطلوبة
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
