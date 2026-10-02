@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart'; // 1. استيراد فايربيس
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'package:janbak_delivery/features/auth/services/notification_service.dart'; // استيراد خدمة الإشعارات (تأكد من مسار الملف إذا كان في مجلد فرعي)
 // ملاحظة: إذا كان لديك ملف firebase_options.generated (الخاص بإعدادات الويب/المنصات)، يمكنك استيراده هكذا:
 // import 'firebase_options.dart';
 
@@ -14,8 +15,11 @@ void main() async {
     // إذا كنت تعمل على الويب ولديك ملف firebase_options.dart، استبدل الدالة أدناه بـ:
     // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await Firebase.initializeApp();
+    
+    // تفعيل وتهيئة خدمة الإشعارات
+    NotificationService.initNotifications();
   } catch (e) {
-    debugPrint('خطأ في تهيئة فايربيس: $e');
+    debugPrint('خطأ في تهيئة فايربيس أو الإشعارات: $e');
   }
 
   runApp(const JanbakApp());
