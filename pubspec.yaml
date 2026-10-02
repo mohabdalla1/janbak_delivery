@@ -1,10 +1,10 @@
 name: janbak_delivery
 description: "A professional delivery and services application - Janbak"
 publish_to: "none"
-version: 1. 0.39+39
+version: 1.0.39
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: ">=3.5.0 <4.0.0"
 
 dependencies:
   flutter:
