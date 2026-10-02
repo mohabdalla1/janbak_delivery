@@ -33,7 +33,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               onPositionChanged: (position, hasGesture) {
                 if (hasGesture && position.center != null) {
                   setState(() {
-                    _selectedLocation = position.center!;
+                    _selectedLocation = position.center;
                   });
                 }
               },
