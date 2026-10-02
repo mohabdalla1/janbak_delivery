@@ -1,35 +1,38 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.janbak.janbak_delivery" // تأكد أنه مطبق بالشكل الصحيح
+    namespace = "com.janbak.delivery"
     compileSdk = flutter.compileSdkVersion
-    compileToolsVersion = flutter.buildToolsVersion
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-        isCoreLibraryDesugaringEnabled = true // تفعيل الـ Desugaring لحل مشكلة الإشعارات
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+        // تفعيل الـ Desugaring لحل مشاكل التوافق والإشعارات
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     defaultConfig {
-        applicationId = "com.janbak.janbak_delivery"
+        applicationId = "com.janbak.delivery"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode.toInt()
+        versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled = true // ضروري لتجنب أخطاء الـ dex
+        multiDexEnabled = true
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             isShrinkResources = false
         }
@@ -37,5 +40,10 @@ android {
 }
 
 dependencies {
+    // إضافة مكتبة الـ Desugaring المطلوبة حصرياً للإشعارات
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+}
+
+flutter {
+    source = "../.."
 }
