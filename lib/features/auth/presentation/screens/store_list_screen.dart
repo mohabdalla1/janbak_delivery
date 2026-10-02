@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_theme.dart';
+import 'store_details_screen.dart'; // استيراد شاشة تفاصيل المتجر
 
 class StoreListScreen extends StatelessWidget {
   const StoreListScreen({super.key});
@@ -6,25 +8,25 @@ class StoreListScreen extends StatelessWidget {
   // بيانات تجريبية مؤقتة للمتاجر لحين إعادة تفعيل Firebase
   final List<Map<String, dynamic>> _mockStores = const [
     {
-      'name' : 'مطعم النيل الأرزق',
-      'category' : 'مأكولات ومشاوي',
-      'rating' : 4.8,
-      'time' : '20 - 30 دقيقة',
-      'isOpen' : true,
+      'name': 'مطعم النيل الأزرق',
+      'category': 'مأكولات ومشاوي',
+      'rating': 4.8,
+      'time': '20 - 30 دقيقة',
+      'isOpen': true,
     },
     {
-      'name' : 'سوبرماركت البركة',
-      'category' : 'بقالة ومواد غذائية',
-      'rating' : 4.6,
-      'time' : '15 - 25 دقيقة',
-      'isOpen' : true,
+      'name': 'سوبرماركت البركة',
+      'category': 'بقالة ومواد غذائية',
+      'rating': 4.6,
+      'time': '15 - 25 دقيقة',
+      'isOpen': true,
     },
     {
-      'name' : 'مخبز حلفا الحديث',
-      'category' : 'مخبوزات ومعجنات',
-      'rating' : 4.9,
-      'time' : '10 - 20 دقيقة',
-      'isOpen' : false,
+      'name': 'مخبز حلفا الحديث',
+      'category': 'مخبوزات ومعجنات',
+      'rating': 4.9,
+      'time': '10 - 20 دقيقة',
+      'isOpen': false,
     },
   ];
 
@@ -49,8 +51,8 @@ class StoreListScreen extends StatelessWidget {
             child: ListTile(
               contentPadding: const EdgeInsets.all(16.0),
               leading: CircleAvatar(
-                backgroundColor: Colors.orange.shade100,
-                child: const Icon(Icons.store, color: Colors.orange),
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryColor),
               ),
               title: Text(
                 store['name'],
@@ -63,7 +65,7 @@ class StoreListScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4.0),
-                  Text(store['category']),
+                  Text(store['category'], style: const TextStyle(color: AppTheme.textGrey)),
                   const SizedBox(height: 8.0),
                   Row(
                     children: [
@@ -94,7 +96,13 @@ class StoreListScreen extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                // الانتقال لتفاصيل المتجر لاحقاً
+                // الانتقال الفوري لشاشة تفاصيل المتجر وإرسال بيانات المتجر معها
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StoreDetailsScreen(storeData: store),
+                  ),
+                );
               },
             ),
           );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import 'location_picker_screen.dart'; // استيراد شاشة اختيار الموقع
@@ -20,6 +21,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   LatLng _currentDeliveryLocation = const LatLng(15.3215, 35.5833);
   final MapController _mapController = MapController();
 
+  // القسم المختار للفلترة (الكل أو نشاط محدد)
+  String _selectedCategory = 'الكل';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,8 +32,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded),
+            tooltip: 'تسجيل الخروج',
             onPressed: () {
-              // تسجيل الخروج والعودة للشاشة الموحدة
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -41,33 +45,36 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
       body: Stack(
         children: [
-          // 1. خريطة OpenStreetMap المجانية عبر flutter_map
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _currentDeliveryLocation,
-              initialZoom: 15.0,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.janbak.delivery',
+          // 1. خريطة OpenStreetMap المجانية عبر flutter_map (في الخلفية أو جزء علوي)
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.35,
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _currentDeliveryLocation,
+                initialZoom: 15.0,
               ),
-              MarkerLayer(
-                markers: [
-                  Marker(
-                    point: _currentDeliveryLocation,
-                    width: 80,
-                    height: 80,
-                    child: const Icon(
-                      Icons.location_pin,
-                      size: 45,
-                      color: AppTheme.primaryColor,
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.janbak.delivery',
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _currentDeliveryLocation,
+                      width: 80,
+                      height: 80,
+                      child: const Icon(
+                        Icons.location_pin,
+                        size: 45,
+                        color: AppTheme.primaryColor,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
 
           // 2. بطاقة البحث لتحديد أو تغيير موقع التوصيل عند النقر
@@ -77,7 +84,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             right: 16,
             child: GestureDetector(
               onTap: () async {
-                // الانتقال لشاشة اختيار الموقع الدقيق على الخريطة
                 final LatLng? selectedPos = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const LocationPickerScreen()),
@@ -87,7 +93,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   setState(() {
                     _currentDeliveryLocation = selectedPos;
                   });
-                  // تحريك الخريطة للموقع الجديد
                   _mapController.move(selectedPos, 15.0);
                   
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -127,45 +132,173 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ),
 
-          // 3. شريط سفلي للخدمات السريعة
-          Positioned(
-            bottom: 24,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'اختر نوع الخدمة',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+          // 3. قائمة الخدمات والمتاجر الحقيقية القادمة من Firestore أسفل الخريطة
+          DraggableScrollableSheet(
+            initialChildSize: 0.65,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _serviceItem(Icons.restaurant_rounded, 'مطاعم'),
-                      _serviceItem(Icons.local_grocery_store_rounded, 'بقالة ومقاضي'),
-                      _serviceItem(Icons.local_pharmacy_rounded, 'صيدليات'),
-                      _serviceItem(Icons.bolt_rounded, 'خدمات صيانة'),
+                      // مقبض السحب (Drag Handle)
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      const Text(
+                        'اختر نوع الخدمة',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      // أزرار الخدمات السريعة (الفلاتر)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _serviceItem(Icons.storefront_rounded, 'الكل'),
+                          _serviceItem(Icons.restaurant_rounded, 'مطاعم'),
+                          _serviceItem(Icons.local_grocery_store_rounded, 'بقالة'),
+                          _serviceItem(Icons.local_pharmacy_rounded, 'صيدليات'),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      Text(
+                        'المتاجر المتاحة (${_selectedCategory})',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.secondaryColor),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // جلب المتاجر لحظياً من Firestore وعرضها
+                      Expanded(
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: FirebaseFirestore.instance.collection('merchants').snapshots(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+
+                            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.store_mall_directory_outlined, size: 60, color: Colors.grey[400]),
+                                    const SizedBox(height: 12),
+                                    const Text('لا توجد متاجر مسجلة حالياً', style: TextStyle(color: Colors.grey, fontSize: 15)),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            // فلترة المتاجر بناءً على القسم المختار
+                            var merchants = snapshot.data!.docs;
+                            if (_selectedCategory != 'الكل') {
+                              merchants = merchants.where((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
+                                final activity = data['merchantActivity'] ?? '';
+                                return activity.toString().contains(_selectedCategory);
+                              }).toList();
+                            }
+
+                            if (merchants.isEmpty) {
+                              return const Center(
+                                child: Text('لا توجد متاجر في هذا القسم حالياً', style: TextStyle(color: Colors.grey)),
+                              );
+                            }
+
+                            return ListView.builder(
+                              controller: scrollController,
+                              itemCount: merchants.length,
+                              itemBuilder: (context, index) {
+                                final merchantData = merchants[index].data() as Map<String, dynamic>;
+                                final storeName = merchantData['storeName'] ?? 'متجر جنبك';
+                                final merchantActivity = merchantData['merchantActivity'] ?? 'نشاط عام';
+                                final isOpen = merchantData['isOpen'] ?? true;
+
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  elevation: 2,
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.all(12),
+                                    leading: CircleAvatar(
+                                      radius: 26,
+                                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                                      child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryColor),
+                                    ),
+                                    title: Text(
+                                      storeName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        Text('النشاط: $merchantActivity', style: const TextStyle(color: AppTheme.textGrey, fontSize: 13)),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: isOpen ? Colors.green : Colors.red,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              isOpen ? 'مفتوح' : 'مغلق',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: isOpen ? Colors.green : Colors.red,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppTheme.primaryColor),
+                                    onTap: () {
+                                      // TODO: الانتقال لشاشة عرض منتجات هذا المتجر
+                                    },
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -173,22 +306,39 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   Widget _serviceItem(IconData icon, String title) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            shape: BoxShape.circle,
+    final bool isSelected = _selectedCategory == title;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCategory = title;
+        });
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.primaryColor : AppTheme.primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: isSelected ? Colors.white : AppTheme.primaryColor,
+              size: 24,
+            ),
           ),
-          child: Icon(icon, color: AppTheme.primaryColor, size: 24),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
-        ),
-      ],
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? AppTheme.primaryColor : AppTheme.secondaryColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
