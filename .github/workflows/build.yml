@@ -29,9 +29,9 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
-      - name: Build APK Debug
+      - name: Build APK Release
         run: |
-          flutter build apk --debug \
+          flutter build apk --release \
             --android-skip-build-dependency-validation \
             --build-name=1.0.${{ github.run_number }} \
             --build-number=${{ github.run_number }}
@@ -41,7 +41,7 @@ jobs:
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: "Janbak Delivery App v1.0.${{ github.run_number }}"
-          files: build/app/outputs/flutter-apk/app-debug.apk
+          files: build/app/outputs/flutter-apk/app-release.apk
           body: "نسخة جديدة جاهزة للتثبيت المباشر لتطبيق جنبك."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
