@@ -24,8 +24,8 @@ android {
     }
 
     defaultConfig {
-        // تم تغيير اسم الحزمة قليلاً لتجاوز أي تعليق أو تلف سابق في نظام أندرويد
-        applicationId = "com.janbak.delivery.app"
+        // مطابقة التسمية مع ملف google-services.json لمنع خطأ البناء
+        applicationId = "com.janbak.delivery"
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -35,7 +35,7 @@ android {
 
     buildTypes {
         getByName("release") {
-            // إجبار نسخة الـ Release على الاستفادة من مفتاح توقيع ה-debug الافتراضي
+            // إجبار نسخة الـ Release على الاستفادة من مفتاح توقيع ה-debug الافتراضي للتثبيت المباشر
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             isShrinkResources = false
