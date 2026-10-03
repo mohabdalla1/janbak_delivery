@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
-import 'location_picker_screen.dart'; // استيراد شاشة اختيار الموقع
+import 'location_picker_screen.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -16,12 +17,13 @@ class CustomerHomeScreen extends StatefulWidget {
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   // إحداثيات مركز مدينة حلفا الجديدة
   final LatLng halfaNewCenter = const LatLng(15.3215, 35.5833);
-  
+
   // إحداثيات الموقع الحالي المختار للتوصيل
   LatLng _currentDeliveryLocation = const LatLng(15.3215, 35.5833);
+
   final MapController _mapController = MapController();
 
-  // القسم المختار للفلترة (الكل أو نشاط محدد)
+  // القسم المختار للفلترة
   String _selectedCategory = 'الكل';
 
   @override
@@ -36,7 +38,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             onPressed: () {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                MaterialPageRoute(
+                  builder: (_) => const LoginScreen(),
+                ),
                 (route) => false,
               );
             },
@@ -45,7 +49,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
       body: Stack(
         children: [
-          // 1. خريطة OpenStreetMap المجانية عبر flutter_map (في الخلفية أو جزء علوي)
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.35,
             child: FlutterMap(
@@ -56,7 +59,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.janbak.delivery',
                 ),
                 MarkerLayer(
@@ -77,28 +81,38 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ),
 
-          // 2. بطاقة البحث لتحديد أو تغيير موقع التوصيل عند النقر
+          // بطاقة تحديد موقع التوصيل
           Positioned(
             top: 16,
             left: 16,
             right: 16,
             child: GestureDetector(
               onTap: () async {
-                final LatLng? selectedPos = await Navigator.push(
+                final LatLng? selectedPos = await Navigator.push<LatLng>(
                   context,
-                  MaterialPageRoute(builder: (context) => const LocationPickerScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const LocationPickerScreen(),
+                  ),
                 );
-                
-                if (selectedPos != null) {
-                  setState(() {
-                    _currentDeliveryLocation = selectedPos;
-                  });
-                  _mapController.move(selectedPos, 15.0);
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تم تحديث موقع التوصيل بنجاح في حلفا الجديدة')),
-                  );
-                }
+
+                // مهم: فحص mounted بعد await
+                if (!mounted) return;
+
+                if (selectedPos == null) return;
+
+                setState(() {
+                  _currentDeliveryLocation = selectedPos;
+                });
+
+                _mapController.move(selectedPos, 15.0);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'تم تحديث موقع التوصيل بنجاح في حلفا الجديدة',
+                    ),
+                  ),
+                );
               },
               child: Card(
                 elevation: 4,
@@ -106,24 +120,39 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: AppTheme.textGrey),
+                      const Icon(
+                        Icons.search,
+                        color: AppTheme.textGrey,
+                      ),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'انقر هنا لتحديد موقع التوصيل بدقة في حلفا الجديدة',
-                          style: TextStyle(color: AppTheme.textGrey, fontSize: 13),
+                          style: TextStyle(
+                            color: AppTheme.textGrey,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          color: AppTheme.primaryColor.withValues(
+                            alpha: 0.1,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.my_location_rounded, color: AppTheme.primaryColor, size: 20),
+                        child: const Icon(
+                          Icons.my_location_rounded,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
                       ),
                     ],
                   ),
@@ -132,7 +161,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
           ),
 
-          // 3. قائمة الخدمات والمتاجر الحقيقية القادمة من Firestore أسفل الخريطة
+          // قائمة المتاجر والخدمات
           DraggableScrollableSheet(
             initialChildSize: 0.65,
             minChildSize: 0.5,
@@ -141,7 +170,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               return Container(
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black12,
@@ -151,11 +182,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // مقبض السحب (Drag Handle)
+                      // مقبض السحب
                       Center(
                         child: Container(
                           width: 40,
@@ -167,66 +198,121 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       const Text(
                         'اختر نوع الخدمة',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      
-                      // أزرار الخدمات السريعة (الفلاتر)
+
+                      // أزرار الفلترة
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _serviceItem(Icons.storefront_rounded, 'الكل'),
-                          _serviceItem(Icons.restaurant_rounded, 'مطاعم'),
-                          _serviceItem(Icons.local_grocery_store_rounded, 'بقالة'),
-                          _serviceItem(Icons.local_pharmacy_rounded, 'صيدليات'),
+                          _serviceItem(
+                            Icons.storefront_rounded,
+                            'الكل',
+                          ),
+                          _serviceItem(
+                            Icons.restaurant_rounded,
+                            'مطاعم',
+                          ),
+                          _serviceItem(
+                            Icons.local_grocery_store_rounded,
+                            'بقالة',
+                          ),
+                          _serviceItem(
+                            Icons.local_pharmacy_rounded,
+                            'صيدليات',
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
 
                       Text(
-                        'المتاجر المتاحة (${_selectedCategory})',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.secondaryColor),
+                        'المتاجر المتاحة ($_selectedCategory)',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: AppTheme.secondaryColor,
+                        ),
                       ),
                       const SizedBox(height: 10),
 
-                      // جلب المتاجر لحظياً من Firestore وعرضها
                       Expanded(
                         child: StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance.collection('merchants').snapshots(),
+                          stream: FirebaseFirestore.instance
+                              .collection('merchants')
+                              .snapshots(),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
                             }
 
-                            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                            if (snapshot.hasError) {
+                              return const Center(
+                                child: Text(
+                                  'حدث خطأ أثناء تحميل المتاجر',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              );
+                            }
+
+                            if (!snapshot.hasData ||
+                                snapshot.data!.docs.isEmpty) {
                               return Center(
                                 child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.store_mall_directory_outlined, size: 60, color: Colors.grey[400]),
+                                    Icon(
+                                      Icons
+                                          .store_mall_directory_outlined,
+                                      size: 60,
+                                      color: Colors.grey[400],
+                                    ),
                                     const SizedBox(height: 12),
-                                    const Text('لا توجد متاجر مسجلة حالياً', style: TextStyle(color: Colors.grey, fontSize: 15)),
+                                    const Text(
+                                      'لا توجد متاجر مسجلة حالياً',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 15,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               );
                             }
 
-                            // فلترة المتاجر بناءً على القسم المختار
                             var merchants = snapshot.data!.docs;
+
+                            // فلترة المتاجر حسب القسم
                             if (_selectedCategory != 'الكل') {
                               merchants = merchants.where((doc) {
-                                final data = doc.data() as Map<String, dynamic>;
-                                final activity = data['merchantActivity'] ?? '';
-                                return activity.toString().contains(_selectedCategory);
+                                final data =
+                                    doc.data() as Map<String, dynamic>;
+
+                                final activity =
+                                    data['merchantActivity'] ?? '';
+
+                                return activity
+                                    .toString()
+                                    .contains(_selectedCategory);
                               }).toList();
                             }
 
                             if (merchants.isEmpty) {
                               return const Center(
-                                child: Text('لا توجد متاجر في هذا القسم حالياً', style: TextStyle(color: Colors.grey)),
+                                child: Text(
+                                  'لا توجد متاجر في هذا القسم حالياً',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
                               );
                             }
 
@@ -234,31 +320,61 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               controller: scrollController,
                               itemCount: merchants.length,
                               itemBuilder: (context, index) {
-                                final merchantData = merchants[index].data() as Map<String, dynamic>;
-                                final storeName = merchantData['storeName'] ?? 'متجر جنبك';
-                                final merchantActivity = merchantData['merchantActivity'] ?? 'نشاط عام';
-                                final isOpen = merchantData['isOpen'] ?? true;
+                                final merchantData = merchants[index].data()
+                                    as Map<String, dynamic>;
+
+                                final storeName =
+                                    merchantData['storeName'] ??
+                                        'متجر جنبك';
+
+                                final merchantActivity =
+                                    merchantData['merchantActivity'] ??
+                                        'نشاط عام';
+
+                                final isOpen =
+                                    merchantData['isOpen'] ?? true;
 
                                 return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  margin: const EdgeInsets.only(
+                                    bottom: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(14),
+                                  ),
                                   elevation: 2,
                                   child: ListTile(
-                                    contentPadding: const EdgeInsets.all(12),
+                                    contentPadding:
+                                        const EdgeInsets.all(12),
                                     leading: CircleAvatar(
                                       radius: 26,
-                                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                      child: const Icon(Icons.storefront_rounded, color: AppTheme.primaryColor),
+                                      backgroundColor: AppTheme
+                                          .primaryColor
+                                          .withValues(alpha: 0.1),
+                                      child: const Icon(
+                                        Icons.storefront_rounded,
+                                        color: AppTheme.primaryColor,
+                                      ),
                                     ),
                                     title: Text(
-                                      storeName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      storeName.toString(),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                     subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const SizedBox(height: 4),
-                                        Text('النشاط: $merchantActivity', style: const TextStyle(color: AppTheme.textGrey, fontSize: 13)),
+                                        Text(
+                                          'النشاط: ${merchantActivity.toString()}',
+                                          style: const TextStyle(
+                                            color: AppTheme.textGrey,
+                                            fontSize: 13,
+                                          ),
+                                        ),
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
@@ -267,15 +383,21 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                               height: 8,
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
-                                                color: isOpen ? Colors.green : Colors.red,
+                                                color: isOpen == true
+                                                    ? Colors.green
+                                                    : Colors.red,
                                               ),
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
-                                              isOpen ? 'مفتوح' : 'مغلق',
+                                              isOpen == true
+                                                  ? 'مفتوح'
+                                                  : 'مغلق',
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: isOpen ? Colors.green : Colors.red,
+                                                color: isOpen == true
+                                                    ? Colors.green
+                                                    : Colors.red,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -283,9 +405,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                         ),
                                       ],
                                     ),
-                                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppTheme.primaryColor),
+                                    trailing: const Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 16,
+                                      color: AppTheme.primaryColor,
+                                    ),
                                     onTap: () {
-                                      // TODO: الانتقال لشاشة عرض منتجات هذا المتجر
+                                      // TODO:
+                                      // الانتقال إلى شاشة منتجات المتجر
                                     },
                                   ),
                                 );
@@ -319,12 +446,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primaryColor : AppTheme.primaryColor.withValues(alpha: 0.1),
+              color: isSelected
+                  ? AppTheme.primaryColor
+                  : AppTheme.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: isSelected ? Colors.white : AppTheme.primaryColor,
+              color: isSelected
+                  ? Colors.white
+                  : AppTheme.primaryColor,
               size: 24,
             ),
           ),
@@ -334,7 +465,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: isSelected ? AppTheme.primaryColor : AppTheme.secondaryColor,
+              color: isSelected
+                  ? AppTheme.primaryColor
+                  : AppTheme.secondaryColor,
             ),
           ),
         ],

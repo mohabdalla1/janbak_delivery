@@ -1,7 +1,7 @@
 name: janbak_delivery
 description: "A professional delivery and services application - Janbak"
 publish_to: "none"
-version: 1.0.16
+version: 1.0.44
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
