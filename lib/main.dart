@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:firebase_core/firebase_core.dart'; // 1. استيراد فايربيس
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // 1. استيراد خيارات الفايربيز الخاصة بمشروعك
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
-import 'package:janbak_delivery/features/auth/services/notification_service.dart'; // استيراد خدمة الإشعارات (تأكد من مسار الملف إذا كان في مجلد فرعي)
-// ملاحظة: إذا كان لديك ملف firebase_options.generated (الخاص بإعدادات الويب/المنصات)، يمكنك استيراده هكذا:
-// import 'firebase_options.dart';
+import 'features/auth/services/notification_service.dart';
 
 void main() async {
+  // 1. إجبار الفلاتر على تهيئة الـ Binding
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. تهيئة فايربيس بشكل آمن ومحمي لمنع أي شاشة بيضاء
   try {
-    // إذا كنت تعمل على الويب ولديك ملف firebase_options.dart، استبدل الدالة أدناه بـ:
-    // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    await Firebase.initializeApp();
-    
-    // تفعيل وتهيئة خدمة الإشعارات
-    NotificationService.initNotifications();
+    // 2. تهيئة فايربيس بالخيارات المحددة للمنصة الحالية
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // 3. تهيئة خدمة الإشعارات وانتظار اكتمالها
+    await NotificationService.initNotifications();
   } catch (e) {
-    debugPrint('خطأ في تهيئة فايربيس أو الإشعارات: $e');
+    debugPrint('خطأ رئيسي في تهيئة فايربيس أو الإشعارات: $e');
   }
 
   runApp(const JanbakApp());

@@ -1,4 +1,4 @@
-package com.example.janbak_delivery
+package com.janbak.delivery
 
 import io.flutter.embedding.android.FlutterActivity
 
