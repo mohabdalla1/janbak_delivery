@@ -9,7 +9,6 @@ plugins {
 }
 
 android {
-    // يجب أن يطابق تماماً مكان ملف MainActivity.kt لعدم حدوث انهيار عند الفتح
     namespace = "com.janbak.delivery"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -17,7 +16,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        // تفعيل الـ Desugaring لحل مشاكل التوافق والإشعارات
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -26,8 +24,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.janbak.delivery"
-        // رفع minSdk صراحة إلى 21 لتوافقية Firebase و MultiDex
+        // تم تغيير اسم الحزمة قليلاً لتجاوز أي تعليق أو تلف سابق في نظام أندرويد
+        applicationId = "com.janbak.delivery.app"
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -36,7 +34,8 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
+            // إجبار نسخة الـ Release على الاستفادة من مفتاح توقيع ה-debug الافتراضي
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             isShrinkResources = false
@@ -45,7 +44,6 @@ android {
 }
 
 dependencies {
-    // مكتبة الـ Desugaring للميزات الحديثة والإشعارات
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
 
