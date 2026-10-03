@@ -93,6 +93,10 @@ class MerchantOrdersScreen extends StatelessWidget {
                         orderData['status'] as String? ?? 'pending';
                     final customerName =
                         orderData['customerName'] as String? ?? 'عميل جنبك';
+                    final customerPhone =
+                        orderData['customerPhone'] as String?;
+                    final deliveryAddress =
+                        orderData['address'] as String?;
                     final totalPrice = orderData['totalPrice'] ?? 0;
                     final items = orderData['items'] is List
                         ? List<dynamic>.from(orderData['items'] as List)
@@ -146,7 +150,53 @@ class MerchantOrdersScreen extends StatelessWidget {
                               ],
                             ),
 
-                            const SizedBox(height: 8),
+                            if (customerPhone != null &&
+                                customerPhone.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.phone_outlined,
+                                    size: 18,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    customerPhone,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            if (deliveryAddress != null &&
+                                deliveryAddress.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on_outlined,
+                                    size: 18,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'العنوان: $deliveryAddress',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+
+                            const SizedBox(height: 12),
 
                             const Text(
                               'المنتجات المطلوبة:',
@@ -278,7 +328,7 @@ class MerchantOrdersScreen extends StatelessWidget {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withAlpha(25),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color),
       ),
@@ -340,9 +390,30 @@ class MerchantOrdersScreen extends StatelessWidget {
       );
     }
 
+    if (currentStatus == 'ready') {
+      return OutlinedButton.icon(
+        onPressed: () {
+          _updateOrderStatus(
+            context,
+            orderId,
+            'completed',
+          );
+        },
+        icon: const Icon(
+          Icons.done_all,
+          size: 16,
+        ),
+        label: const Text('تم التسليم'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.green,
+          side: const BorderSide(color: Colors.green),
+        ),
+      );
+    }
+
     return const Flexible(
       child: Text(
-        'مكتمل / بانتظار المندوب',
+        'طلب مكتمل',
         textAlign: TextAlign.center,
         style: TextStyle(
           color: Colors.grey,
@@ -366,19 +437,16 @@ class MerchantOrdersScreen extends StatelessWidget {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      if (!context.mounted) {
-        return;
-      }
+      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('تم تحديث حالة الطلب بنجاح'),
+          duration: Duration(seconds: 2),
         ),
       );
     } catch (error) {
-      if (!context.mounted) {
-        return;
-      }
+      if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
