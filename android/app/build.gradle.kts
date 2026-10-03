@@ -28,7 +28,7 @@ android {
     defaultConfig {
         applicationId = "com.janbak.delivery"
         // رفع minSdk صراحة إلى 21 لتوافقية Firebase و MultiDex
-        minSdk = 21
+        minSdkVersion flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
