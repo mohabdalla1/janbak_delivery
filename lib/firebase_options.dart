@@ -42,7 +42,8 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDvRAl7FRUqdtn-I-Ppld0Xuuos1YKZsvw',
-    appId: '1:726035575772:android:3a9235a261222d6887d519',
+    // تم تحديث appId ليطابق التطبيق الجديد com.janbak.delivery.app
+    appId: '1:726035575772:android:ac9e314164fac5a487d519',
     messagingSenderId: '726035575772',
     projectId: 'janbak-delivery',
     storageBucket: 'janbak-delivery.firebasestorage.app',

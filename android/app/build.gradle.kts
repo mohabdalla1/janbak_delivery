@@ -26,9 +26,10 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.janbak.delivery"
+        // اسم الحزمة الجديد لتجاوز ذاكرة التثبيت المعطوبة على الهاتف
+        applicationId = "com.janbak.delivery.app"
         // رفع minSdk صراحة إلى 21 لتوافقية Firebase و MultiDex
-        minSdkVersion flutter.minSdkVersion
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -36,7 +37,8 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
+            // توقيع نسخة الـ Release بمفتاح الـ Debug الافتراضي للتثبيت المباشر
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             isShrinkResources = false
