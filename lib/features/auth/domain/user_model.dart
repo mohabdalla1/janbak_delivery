@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum UserRole { customer, merchant, driver, admin }
 
 class UserModel {
@@ -35,8 +37,8 @@ class UserModel {
       'role': role.name,
       'language': language,
       'isActive': isActive,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 
@@ -53,8 +55,40 @@ class UserModel {
       ),
       language: map['language'] ?? 'ar',
       isActive: map['isActive'] ?? true,
-      createdAt: DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(map['updatedAt'] ?? '') ?? DateTime.now(),
+      createdAt: _parseDateTime(map['createdAt']),
+      updatedAt: _parseDateTime(map['updatedAt']),
+    );
+  }
+
+  // دالة مساعدة لضمان قراءة التواريخ بكل الأشكال دون استثناء
+  static DateTime _parseDateTime(dynamic date) {
+    if (date is Timestamp) return date.toDate();
+    if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+    return DateTime.now();
+  }
+
+  // دالة copyWith لتحديث بيانات الحساب داخل التطبيق بسهولة
+  UserModel copyWith({
+    String? name,
+    String? phone,
+    String? email,
+    String? photoUrl,
+    UserRole? role,
+    String? language,
+    bool? isActive,
+    DateTime? updatedAt,
+  }) {
+    return UserModel(
+      uid: uid,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      photoUrl: photoUrl ?? this.photoUrl,
+      role: role ?? this.role,
+      language: language ?? this.language,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? DateTime.now(),
     );
   }
 }

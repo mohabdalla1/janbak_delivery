@@ -26,6 +26,29 @@ class AuthRepository {
 
   User? get currentUser => _auth.currentUser;
 
+  /// تسجيل الدخول بـ Email & Password
+  Future<UserCredential> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// إنشاء حساب جديد بـ Email & Password
+  Future<UserCredential> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// جلب بروفايل المستخدم من Firestore
   Future<UserModel?> getUserProfile(String uid) async {
     final doc = await _firestore.collection(AppConstants.usersCollection).doc(uid).get();
     if (doc.exists && doc.data() != null) {
@@ -34,6 +57,7 @@ class AuthRepository {
     return null;
   }
 
+  /// إنشاء أو تحديث بروفايل المستخدم في Firestore
   Future<void> createUserProfile(UserModel user) async {
     await _firestore
         .collection(AppConstants.usersCollection)
@@ -41,6 +65,7 @@ class AuthRepository {
         .set(user.toMap(), SetOptions(merge: true));
   }
 
+  /// تسجيل الخروج
   Future<void> signOut() async {
     await _auth.signOut();
   }
