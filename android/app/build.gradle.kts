@@ -24,8 +24,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.janbak.delivery.app"
-        minSdk = 21
+        applicationId = "com.janbak.delivery"
+        minSdkVersion flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
