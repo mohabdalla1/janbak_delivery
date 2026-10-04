@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId) && request.resource.data.role == resource.data.role; // Prevent changing role from client
+    }
+
+    // Stores Collection
+    match /stores/{storeId} {
+      allow read: if true;
+      allow create, update: if hasRole('merchant') && request.resource.data.merchantId == request.auth.uid;
+    }
+
+    // Products Collection
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if hasRole('merchant');
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (
+        resource.data.customerId == request.auth.uid ||
+        resource.data.merchantId == request.auth.uid ||
+        resource.data.driverId == request.auth.uid ||
+        hasRole('admin')
+      );
+      
+      allow create: if hasRole('customer') && request.resource.data.customerId == request.auth.uid;
+      
+      // Updates protected by server-side Cloud Functions or rigid client checks
+      allow update: if isAuthenticated();
+    }
+
+    // Driver Locations
+    match /driver_locations/{driverId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('driver') && request.auth.uid == driverId;
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read, update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
