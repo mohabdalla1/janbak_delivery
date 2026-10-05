@@ -31,37 +31,42 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyJanbakWebApiKeyExample12345',
-    appId: '1:1234567890:web:1234567890',
-    messagingSenderId: '1234567890',
-    projectId: 'janbak-delivery',
-    authDomain: 'janbak-delivery.firebaseapp.com',
-    storageBucket: 'janbak-delivery.appspot.com',
+  apiKey: "AIzaSyBkxkxQUg5t-Ep0RY7M9lWhoPXaw8vse5A",
+  authDomain: "janbak-delivery.firebaseapp.com",
+  projectId: "janbak-delivery",
+  storageBucket: "janbak-delivery.firebasestorage.app",
+  messagingSenderId: "726035575772",
+  appId: "1:726035575772:web:84fa6f28a356764e87d519",
+  measurementId: "G-1PKTSTJ8H0"
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyJanbakAndroidApiKeyExample12345',
-    appId: '1:1234567890:android:1234567890',
-    messagingSenderId: '1234567890',
-    projectId: 'janbak-delivery',
-    storageBucket: 'janbak-delivery.appspot.com',
+  apiKey: "AIzaSyBkxkxQUg5t-Ep0RY7M9lWhoPXaw8vse5A",
+  authDomain: "janbak-delivery.firebaseapp.com",
+  projectId: "janbak-delivery",
+  storageBucket: "janbak-delivery.firebasestorage.app",
+  messagingSenderId: "726035575772",
+  appId: "1:726035575772:web:84fa6f28a356764e87d519",
+  measurementId: "G-1PKTSTJ8H0"
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyJanbakIosApiKeyExample12345',
-    appId: '1:1234567890:ios:1234567890',
-    messagingSenderId: '1234567890',
-    projectId: 'janbak-delivery',
-    storageBucket: 'janbak-delivery.appspot.com',
-    iosBundleId: 'com.sudax.janbakDelivery',
+  apiKey: "AIzaSyBkxkxQUg5t-Ep0RY7M9lWhoPXaw8vse5A",
+  authDomain: "janbak-delivery.firebaseapp.com",
+  projectId: "janbak-delivery",
+  storageBucket: "janbak-delivery.firebasestorage.app",
+  messagingSenderId: "726035575772",
+  appId: "1:726035575772:web:84fa6f28a356764e87d519",
+  measurementId: "G-1PKTSTJ8H0"
   );
 
   static const FirebaseOptions macOS = FirebaseOptions(
-    apiKey: 'AIzaSyJanbakMacApiKeyExample12345',
-    appId: '1:1234567890:ios:1234567890',
-    messagingSenderId: '1234567890',
-    projectId: 'janbak-delivery',
-    storageBucket: 'janbak-delivery.appspot.com',
-    iosBundleId: 'com.sudax.janbakDelivery',
+  apiKey: "AIzaSyBkxkxQUg5t-Ep0RY7M9lWhoPXaw8vse5A",
+  authDomain: "janbak-delivery.firebaseapp.com",
+  projectId: "janbak-delivery",
+  storageBucket: "janbak-delivery.firebasestorage.app",
+  messagingSenderId: "726035575772",
+  appId: "1:726035575772:web:84fa6f28a356764e87d519",
+  measurementId: "G-1PKTSTJ8H0"
   );
 }
