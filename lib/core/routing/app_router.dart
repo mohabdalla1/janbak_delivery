@@ -1,8 +1,35 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/auth/data/auth_repository.dart';
-import '../../features/auth/domain/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../features/auth/data/repositories/auth_repository.dart';
+import '../../features/auth/domain/models/user_model.dart';
+import '../../features/auth/presentation/screens/register_screen.dart';
+
+// استيراد الشاشات الفرعية الجديدة
+import '../../features/customer/presentation/screens/customer_screen.dart';
+import '../../features/merchant/presentation/screens/merchant_screen.dart';
+import '../../features/driver/presentation/screens/driver_screen.dart';
+
+/// كلاس مساعد لتحويل Stream إلى Listenable ليعمل مع GoRouter
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
 
 // 1. مزود لمراقبة وحفظ بيانات الملف الشخصي للمستخدم الحالي
 final userProfileProvider = FutureProvider<UserModel?>((ref) async {
@@ -14,10 +41,10 @@ final userProfileProvider = FutureProvider<UserModel?>((ref) async {
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authRepo = ref.watch(authRepositoryProvider);
-  final profileAsync = ref.watch(userProfileProvider);
 
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
     routes: [
       GoRoute(
         path: '/splash',
@@ -32,35 +59,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
         path: '/customer',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('لوحة العميل - جنبَك')),
-        ),
+        builder: (context, state) => const CustomerScreen(),
       ),
       GoRoute(
         path: '/merchant',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('لوحة التاجر')),
-        ),
+        builder: (context, state) => const MerchantScreen(),
       ),
       GoRoute(
         path: '/driver',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('لوحة السائق')),
-        ),
+        builder: (context, state) => const DriverScreen(),
       ),
     ],
     redirect: (context, state) {
       final firebaseUser = authRepo.currentUser;
-      final isLoggingIn = state.matchedLocation == '/login';
-      final isSplash = state.matchedLocation == '/splash';
+      final location = state.matchedLocation;
+      final isLoggingIn = location == '/login';
+      final isRegistering = location == '/register';
+      final isSplash = location == '/splash';
 
       // 1. إذا لم يكن المستخدم مسجلاً في Firebase Auth
       if (firebaseUser == null) {
-        return isLoggingIn ? null : '/login';
+        return (isLoggingIn || isRegistering) ? null : '/login';
       }
 
-      // 2. استخدام حالة التحميل اللحظية للملف الشخصي
+      // 2. استخدام ref.read لمنع إعادة بناء الراوتر بالكامل عند تغير الحالة
+      final profileAsync = ref.read(userProfileProvider);
+
       return profileAsync.when(
         data: (profile) {
           if (profile == null) return '/login';
@@ -72,12 +101,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             UserRole.admin => '/customer',
           };
 
-          // توجيه المستخدم إلى لوحته المخصصة إذا كان في شاشة الدخول أو الـ Splash
-          if (isLoggingIn || isSplash) {
+          if (isLoggingIn || isRegistering || isSplash) {
             return targetPath;
           }
 
-          return null; // السماح بالتنقل الطبيعي داخل اللوحة
+          return null;
         },
         loading: () => isSplash ? null : '/splash',
         error: (_, __) => '/login',

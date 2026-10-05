@@ -1,42 +1,49 @@
-// lib/features/auth/presentation/screens/login_screen.dart
+// lib/features/auth/presentation/screens/register_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:janbak_delivery/features/auth/domain/models/user_model.dart';
 import '../controllers/auth_controller.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+class RegisterScreen extends ConsumerStatefulWidget {
+  const RegisterScreen({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
+  UserRole _selectedRole = UserRole.customer;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _submitLogin() async {
+  Future<void> _submitRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // إغلاق لوحة المفاتيح
     FocusScope.of(context).unfocus();
 
-    // استدعاء دالة تسجيل الدخول من الـ AuthController
-    await ref.read(authControllerProvider.notifier).login(
+    await ref.read(authControllerProvider.notifier).register(
+          name: _nameController.text.trim(),
           phone: _phoneController.text.trim(),
           password: _passwordController.text,
+          role: _selectedRole,
         );
   }
 
@@ -45,13 +52,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
 
-    // الاستماع لتغيرات الحالة للقيام بالتأثيرات الجانبية
-    ref.listen<AsyncValue<dynamic>>(
+    // الاستماع للنتائج والتنقل تلقائياً عبر GoRouter
+    ref.listen<AsyncValue<UserModel?>>(
       authControllerProvider,
       (previous, next) {
         next.whenOrNull(
-          // في حالة حدوث خطأ أثناء تسجيل الدخول
-          error: (error, stackTrace) {
+          error: (error, _) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(error.toString()),
@@ -60,16 +66,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             );
           },
-          // في حالة نجاح العملية (التوجيه يتم تلقائياً عبر app_router)
           data: (user) {
             if (user != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('تم تسجيل الدخول بنجاح!'),
+                  content: Text('تم إنشاء الحساب بنجاح!'),
                   backgroundColor: Colors.green,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
+              // التوجيه التلقائي يتم عبر app_router بناءً على UserRole
             }
           },
         );
@@ -78,6 +84,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+          onPressed: () => context.pop(),
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -85,19 +99,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // شعار التطبيق
-                  Icon(
-                    Icons.local_shipping_rounded,
-                    size: 80,
-                    color: theme.primaryColor,
-                  ),
-                  const SizedBox(height: 16),
                   Text(
-                    'أهلاً بك مجدداً',
-                    textAlign: TextAlign.center,
+                    'إنشاء حساب جديد',
+                    textAlign: TextAlign.right,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
@@ -105,13 +111,70 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'قم بتسجيل الدخول للمتابعة في تطبيق جنبَك',
-                    textAlign: TextAlign.center,
+                    'انضم إلى تطبيق جنبَك وابدأ الخدمة',
+                    textAlign: TextAlign.right,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.grey[600],
                     ),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 28),
+
+                  // اختيار نوع الحساب (عميل / تاجر / سائق)
+                  Text(
+                    'نوع الحساب',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<UserRole>(
+                    segments: const [
+                      ButtonSegment(
+                        value: UserRole.customer,
+                        label: Text('عميل'),
+                        icon: Icon(Icons.person_outline),
+                      ),
+                      ButtonSegment(
+                        value: UserRole.merchant,
+                        label: Text('تاجر'),
+                        icon: Icon(Icons.storefront_outlined),
+                      ),
+                      ButtonSegment(
+                        value: UserRole.driver,
+                        label: Text('سائق'),
+                        icon: Icon(Icons.two_wheeler_outlined),
+                      ),
+                    ],
+                    selected: {_selectedRole},
+                    onSelectionChanged: (Set<UserRole> newSelection) {
+                      setState(() {
+                        _selectedRole = newSelection.first;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // حقل الاسم الكامل
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'الاسم الكامل',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'يرجى إدخال الاسم الكامل';
+                      }
+                      if (value.trim().length < 3) {
+                        return 'الاسم قصير جداً';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
                   // حقل رقم الهاتف
                   TextFormField(
@@ -126,10 +189,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -141,7 +200,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // حقل كلمة المرور
                   TextFormField(
@@ -165,10 +224,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -180,24 +235,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       return null;
                     },
                   ),
+                  const SizedBox(height: 16),
 
-                  // رابط نسيت كلمة المرور
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () {
-                        // TODO: إتاحة شاشة استعادة كلمة المرور
-                      },
-                      child: const Text('نسيت كلمة المرور؟'),
+                  // حقل تأكيد كلمة المرور
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: !_isConfirmPasswordVisible,
+                    decoration: InputDecoration(
+                      labelText: 'تأكيد كلمة المرور',
+                      prefixIcon: const Icon(Icons.lock_clock_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isConfirmPasswordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                          });
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    validator: (value) {
+                      if (value != _passwordController.text) {
+                        return 'كلمتا المرور غير متطابقتين';
+                      }
+                      return null;
+                    },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
 
-                  // زر تسجيل الدخول
+                  // زر إنشاء الحساب
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: authState.isLoading ? null : _submitLogin,
+                      onPressed: authState.isLoading ? null : _submitRegister,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.primaryColor,
                         shape: RoundedRectangleBorder(
@@ -215,7 +291,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             )
                           : const Text(
-                              'تسجيل الدخول',
+                              'إنشاء الحساب',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -224,22 +300,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
-                  // رابط إنشاء حساب جديد
+                  // العودة لتسجيل الدخول
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'ليس لديك حساب؟',
+                        'لديك حساب بالفعل؟',
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       TextButton(
-                        onPressed: () {
-                          context.push('/register');
-                        },
+                        onPressed: () => context.pop(),
                         child: const Text(
-                          'إنشاء حساب جديد',
+                          'تسجيل الدخول',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
