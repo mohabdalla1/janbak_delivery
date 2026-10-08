@@ -1,7 +1,10 @@
+// lib/features/auth/presentation/screens/login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:janbak_delivery/features/auth/data/repositories/auth_repository.dart';
+import 'package:janbak_delivery/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:janbak_delivery/features/auth/domain/models/user_model.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -10,14 +13,11 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _ConsumerStatefulWidgetState {} // Placeholder reference if needed, using ConsumerState below
-
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   
-  bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
@@ -27,55 +27,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  // دالة تسجيل الدخول الفعلية عبر Firebase / AuthRepository
+  // دالة تسجيل الدخول المربوطة بـ AuthController مع التوجيه المباشر حسب الدور
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      final role = await ref.read(authControllerProvider.notifier).signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
-      try {
-        // استدعاء دالة تسجيل الدخول من الـ AuthRepository عبر Riverpod
-        // ملاحظة: قم بتعديل اسم الدالة والمعاملات حسب ما هو معرف لديك في AuthRepository
-        /*
-        await ref.read(authRepositoryProvider).signInWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-            );
-        */
+      if (!mounted) return;
 
-        // مؤقتاً للتجربة لحين ربط دوال الـ Repository بالكامل
-        await Future.delayed(const Duration(seconds: 2));
-
-        if (!mounted) return;
-
-        // الانتقال أو الاعتماد على الـ StreamListener الرئيسي لتوجيه المستخدم
+      if (role != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('تم تسجيل الدخول بنجاح!'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.teal,
           ),
         );
-      } catch (e) {
-        if (!mounted) return;
+
+        // التوجيه المباشر والسلس بناءً على الدور
+        switch (role) {
+          case UserRole.customer:
+            context.go('/customer');
+            break;
+          case UserRole.merchant:
+            context.go('/merchant');
+            break;
+          case UserRole.driver:
+            context.go('/driver');
+            break;
+          case UserRole.admin:
+            context.go('/customer');
+            break;
+        }
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطأ في تسجيل الدخول: ${e.toString()}'),
+          const SnackBar(
+            content: Text('خطأ: تأكد من البريد الإلكتروني أو كلمة المرور'),
             backgroundColor: Colors.red,
           ),
         );
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -87,11 +87,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // الشعار
-                  const Icon(
-                    Icons.local_shipping_rounded,
-                    size: 80,
-                    color: Colors.teal,
+                  // شعار التطبيق (تأكد من مطابقة مسار الصورة مع مسار الشعار في مشروعك وpubspec.yaml)
+                  Center(
+                    child: SizedBox(
+                      height: 90,
+                      width: 90,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -114,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // حقل البريد الإلكتروني أو الهاتف
+                  // حقل البريد الإلكتروني
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -168,10 +173,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
-
+Align(
+  alignment: Alignment.centerLeft,
+  child: TextButton(
+    onPressed: () => context.push('/forgot-password'),
+    child: const Text(
+      'نسيت كلمة المرور؟',
+      style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+    ),
+  ),
+),
                   // زر تسجيل الدخول
                   ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
+                    onPressed: isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.teal,
@@ -180,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: _isLoading
+                    child: isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -206,11 +220,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const Text('ليس لديك حساب؟'),
                       TextButton(
                         onPressed: () {
-    // استخدم GoRouter للانتقال لصفحة التسجيل
                           context.go('/register'); 
-                             },
-                           child: const Text('إنشاء حساب جديد'),
-                                )
+                        },
+                        child: const Text('إنشاء حساب جديد'),
+                      )
                     ],
                   ),
                 ],

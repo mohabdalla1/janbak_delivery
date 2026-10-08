@@ -1,8 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:janbak_delivery/features/auth/data/repositories/auth_repository.dart';
-import 'package:janbak_delivery/features/auth/domain/models/user_model.dart';
+// lib/features/auth/presentation/controllers/auth_controller.dart
 
-// المزود الخاص بالتحكم في عمليات المصادقة (تسجيل وتوثيق)
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:janbak_delivery/features/auth/domain/auth_repository.dart';
+import 'package:janbak_delivery/features/auth/domain/models/user_model.dart';
+import 'package:janbak_delivery/features/auth/data/repositories/auth_repository_impl.dart';
+
+// المزود الخاص بالتحكم في عمليات المصادقة
 final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
   return AuthController(ref.watch(authRepositoryProvider));
 });
@@ -52,20 +55,29 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  // دالة تسجيل الدخول
-  Future<void> signIn({
+  // دالة تسجيل الدخول (مُعدّلة لتُعيد الـ UserRole لتسهيل التوجيه)
+  Future<UserRole?> signIn({
     required String email,
     required String password,
   }) async {
     state = const AsyncValue.loading();
     try {
+      // 1. تسجيل الدخول وجلب الملف الشخصي وتخزينه في _cachedUser تلقائياً
       await _authRepository.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // 2. سحب المستخدم الحالي لمعرفة دوره
+      final user = _authRepository.currentUser;
+      
       state = const AsyncValue.data(null);
+      
+      // 3. إرجاع دور المستخدم
+      return user?.role;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      return null;
     }
   }
 }
