@@ -1,18 +1,19 @@
-name: Build Flutter APK
+name: Build and Release APK
 
 on:
   push:
-    branches: [ "main", "master" ] # سيعمل البناء تلقائياً عند رفع كود جديد لهذه الفروع
+    tags:
+      - 'v*' # سيعمل الكود تلقائياً فور رفع أي Tag يبدأ بحرف v (مثال: v1.0.1)
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java (JDK 17)
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
@@ -21,17 +22,19 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
-          channel: 'stable'
+          flutter-version: '3.x' # سيستخدم أحدث إصدار مستقر من فلاتر
+          cache: true
 
-      - name: Get dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build APK
+      - name: Build Release APK
         run: flutter build apk --release
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload to GitHub Releases
+        uses: softprops/action-gh-release@v1
         with:
-          name: janbak-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          files: build/app/outputs/flutter-apk/app-release.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
