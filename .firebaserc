@@ -1,7 +1,12 @@
 {
   "projects": {
     "default": "janbak-delivery"
+<<<<<<< HEAD
   },
   "targets": {},
   "etags": {}
 }
+=======
+  }
+}
+>>>>>>> 96da7dbc061abcd5f1fe7e326427fb75d7b737ac
