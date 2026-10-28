@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  image_picker: ^1.0.7
+
   
   # State Management & DI
   flutter_riverpod: ^2.5.1

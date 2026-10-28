@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // هذا الملف يتم توليده تلقائياً في الخطوة 3
-import 'core/routing/app_router.dart'; // استدعاء ملف الـ Router الخاص بك
+import 'package:flutter_localizations/flutter_localizations.dart'; // 1. استيراد حزمة الترجمة المحلية
+import 'firebase_options.dart';
+import 'core/routing/app_router.dart';
+
+// المزود المسؤول عن حفظ وتغيير لغة التطبيق الحالية (عربي / إنجليزي)
+final localeProvider = StateProvider<Locale>((ref) => const Locale('ar'));
 
 void main() async {
-  // 1. ضمان تهيئة ودائع الفلاتر
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. تهيئة Firebase باستخدام الخيارات الخاصة بالمنصة الحالية (Android/iOS/Web)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 3. تشغيل التطبيق مع تفعيل ProviderScope لـ Riverpod
   runApp(
     const ProviderScope(
       child: JanbakApp(),
@@ -26,15 +27,26 @@ class JanbakApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // جلب ملف الـ GoRouter الذي قمت بإعداده مسبقاً
     final goRouter = ref.watch(appRouterProvider);
+    final currentLocale = ref.watch(localeProvider);
 
     return MaterialApp.router(
       title: 'جنبَك - Janbak Delivery',
       debugShowCheckedModeBanner: false,
+      locale: currentLocale,
+      supportedLocales: const [
+        Locale('ar', ''),
+        Locale('en', ''),
+      ],
+      // 2. إضافة وفود الترجمة المطلوبة لعناصر Material و TextFields
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         primarySwatch: Colors.teal,
-        fontFamily: 'Cairo', // أو الخط المعتمد لديك
+        fontFamily: 'Cairo',
       ),
       routerConfig: goRouter,
     );

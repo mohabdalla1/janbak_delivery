@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:janbak_delivery/features/auth/data/repositories/auth_repository.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:janbak_delivery/features/auth/data/repositories/auth_repository_impl.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -9,8 +11,6 @@ class LoginScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
-
-class _ConsumerStatefulWidgetState {} // Placeholder reference if needed, using ConsumerState below
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -27,7 +27,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  // دالة تسجيل الدخول الفعلية عبر Firebase / AuthRepository
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -35,27 +34,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
 
       try {
-        // استدعاء دالة تسجيل الدخول من الـ AuthRepository عبر Riverpod
-        // ملاحظة: قم بتعديل اسم الدالة والمعاملات حسب ما هو معرف لديك في AuthRepository
-        /*
+        // 1. تنفيذ تسجيل الدخول
         await ref.read(authRepositoryProvider).signInWithEmailAndPassword(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
             );
-        */
 
-        // مؤقتاً للتجربة لحين ربط دوال الـ Repository بالكامل
-        await Future.delayed(const Duration(seconds: 2));
+        // 2. الحصول على المستخدم الحالي بعد النجاح
+        final currentUser = FirebaseAuth.instance.currentUser;
 
-        if (!mounted) return;
+        if (currentUser != null) {
+          // 3. جلب دور المستخدم من قاعدة بيانات Firestore
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser.uid)
+              .get();
 
-        // الانتقال أو الاعتماد على الـ StreamListener الرئيسي لتوجيه المستخدم
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم تسجيل الدخول بنجاح!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+          if (!mounted) return;
+
+          if (userDoc.exists) {
+            final role = userDoc.data()?['role'];
+
+            // 4. التوجيه بناءً على الدور المخزن
+            switch (role) {
+              case 'customer':
+                context.go('/customer');
+                break;
+              case 'merchant':
+                context.go('/merchant');
+                break;
+              case 'driver':
+                context.go('/driver');
+                break;
+              default:
+                context.go('/customer');
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('بيانات المستخدم غير موجودة في قاعدة البيانات'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -87,11 +109,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // الشعار
-                  const Icon(
-                    Icons.local_shipping_rounded,
-                    size: 80,
-                    color: Colors.teal,
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      height: 90,
+                      width: 90,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -113,8 +137,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // حقل البريد الإلكتروني أو الهاتف
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -133,8 +155,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // حقل كلمة المرور
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -168,8 +188,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
-
-                  // زر تسجيل الدخول
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
@@ -198,19 +216,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                   ),
                   const SizedBox(height: 16),
-
-                  // الانتقال لشاشة إنشاء حساب
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text('ليس لديك حساب؟'),
                       TextButton(
                         onPressed: () {
-    // استخدم GoRouter للانتقال لصفحة التسجيل
-                          context.go('/register'); 
-                             },
-                           child: const Text('إنشاء حساب جديد'),
-                                )
+                          context.go('/register');
+                        },
+                        child: const Text('إنشاء حساب جديد'),
+                      )
                     ],
                   ),
                 ],

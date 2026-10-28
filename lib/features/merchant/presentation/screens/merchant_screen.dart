@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:janbak_delivery/features/auth/data/repositories/auth_repository.dart';
+import 'package:go_router/go_router.dart';
+import 'package:janbak_delivery/features/auth/data/repositories/auth_repository_impl.dart';
 
 class MerchantScreen extends ConsumerWidget {
   const MerchantScreen({super.key});
@@ -16,6 +17,9 @@ class MerchantScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await ref.read(authRepositoryProvider).signOut();
+              if (context.mounted) {
+                context.go('/login');
+              }
             },
             tooltip: 'تسجيل الخروج',
           ),
@@ -33,26 +37,42 @@ class MerchantScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
-                children: const [
+                children: [
                   ListTile(
-                    leading: Icon(Icons.inventory, color: Colors.teal),
-                    title: Text('إدارة منتجات المتجر'),
-                    subtitle: Text('إضافة، تعديل، أو حذف المنتجات'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    leading: const Icon(Icons.inventory, color: Colors.teal),
+                    title: const Text('إدارة منتجات المتجر'),
+                    subtitle: const Text('إضافة، تعديل، أو حذف المنتجات'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      // الانتقال إلى صفحة إدارة المنتجات
+                      context.go('/merchant/products');
+                    },
                   ),
-                  Divider(),
+                  const Divider(),
                   ListTile(
-                    leading: Icon(Icons.list_alt, color: Colors.orange),
-                    title: Text('الطلبات الواردة'),
-                    subtitle: Text('متابعة طلبات الزبائن وتجهيزها'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    leading: const Icon(Icons.list_alt, color: Colors.orange),
+                    title: const Text('الطلبات الواردة'),
+                    subtitle: const Text('متابعة طلبات الزبائن وتجهيزها'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      // يمكنك إضافة مسار الطلبات الواردة هنا لاحقاً
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('قريباً: قسم الطلبات الواردة')),
+                      );
+                    },
                   ),
-                  Divider(),
+                  const Divider(),
                   ListTile(
-                    leading: Icon(Icons.analytics, color: Colors.blue),
-                    title: Text('المبيعات والأرباح'),
-                    subtitle: Text('تقرير الأداء المالي اليومي والشهري'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                    leading: const Icon(Icons.analytics, color: Colors.blue),
+                    title: const Text('المبيعات والأرباح'),
+                    subtitle: const Text('تقرير الأداء المالي اليومي والشهري'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      // يمكنك إضافة مسار التقارير هنا لاحقاً
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('قريباً: قسم المبيعات والأرباح')),
+                      );
+                    },
                   ),
                 ],
               ),

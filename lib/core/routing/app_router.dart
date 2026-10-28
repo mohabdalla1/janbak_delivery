@@ -1,66 +1,97 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:janbak_delivery/features/merchant/presentation/screens/merchant_products_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../features/auth/data/repositories/auth_repository.dart';
-import '../../features/auth/domain/models/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
-// استيراد الشاشات الفرعية
 import '../../features/customer/presentation/screens/customer_screen.dart';
 import '../../features/merchant/presentation/screens/merchant_screen.dart';
 import '../../features/driver/presentation/screens/driver_screen.dart';
 
-
-/// كلاس مساعد لتحويل Stream إلى Listenable ليعمل مع GoRouter
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
+/// صفحة الـ Splash التي تفحص حالة المستخدم وتوجهه تلقائياً حسبدوره
+class SplashScreen extends ConsumerStatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    // انتظار بسيط لضمان تحميل البيئة وعرض الشعار/التحميل
+    await Future.delayed(const Duration(milliseconds: 800));
+    final user = FirebaseAuth.instance.currentUser;
+    if (!mounted) return;
+
+    if (user == null) {
+      context.go('/login');
+    } else {
+      try {
+        // جلب دور المستخدم من قاعدة البيانات
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (!mounted) return;
+
+        if (userDoc.exists) {
+          final role = userDoc.data()?['role'];
+
+          // توجيه المستخدم حسب دوره المخصص
+          switch (role) {
+            case 'customer':
+              context.go('/customer');
+              break;
+            case 'merchant':
+              context.go('/merchant');
+              break;
+            case 'driver':
+              context.go('/driver');
+              break;
+            default:
+              context.go('/customer');
+          }
+        } else {
+          context.go('/login');
+        }
+      } catch (e) {
+        context.go('/login');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: CircularProgressIndicator(color: Colors.teal),
+      ),
+    );
   }
 }
 
-/// 1. مزود لجلب بيانات الملف الشخصي للمستخدم الحالي
-final userProfileProvider = FutureProvider<UserModel?>((ref) async {
-  final authRepo = ref.watch(authRepositoryProvider);
-  final user = authRepo.currentUser;
-  if (user == null) return null;
-  return await authRepo.getUserProfile(user.uid);
-});
-
-/// 2. إعدادات الـ GoRouter والتوجيه الذكي
+/// إعدادات الـ GoRouter المستقرة
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-
   return GoRouter(
     initialLocation: '/splash',
-    refreshListenable: GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges()),
     routes: [
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: CircularProgressIndicator(color: Colors.teal)),
-        ),
+        builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/register',
-        builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/register',
@@ -78,42 +109,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/driver',
         builder: (context, state) => const DriverScreen(),
       ),
+      GoRoute(
+  path: '/merchant/products',
+  builder: (context, state) => const MerchantProductsScreen(),
+),
     ],
-    redirect: (context, state) {
-      final firebaseUser = authRepo.currentUser;
-      final location = state.matchedLocation;
-      final isLoggingIn = location == '/login';
-      final isRegistering = location == '/register';
-      final isSplash = location == '/splash';
-
-      // أ. إذا لم يكن المستخدم مسجلاً في Firebase Auth
-      if (firebaseUser == null) {
-        return (isLoggingIn || isRegistering) ? null : '/login';
-      }
-
-      // ب. قراءة بيانات البروفايل للتحقق من دور المستخدم (Role)
-      final profileAsync = ref.read(userProfileProvider);
-
-      return profileAsync.when(
-        data: (profile) {
-          if (profile == null) return '/login';
-
-          final targetPath = switch (profile.role) {
-            UserRole.customer => '/customer',
-            UserRole.merchant => '/merchant',
-            UserRole.driver => '/driver',
-            UserRole.admin => '/customer',
-          };
-
-          if (isLoggingIn || isRegistering || isSplash) {
-            return targetPath;
-          }
-
-          return null;
-        },
-        loading: () => isSplash ? null : '/splash',
-        error: (_, __) => '/login',
-      );
-    },
   );
 });

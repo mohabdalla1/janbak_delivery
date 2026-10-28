@@ -30,7 +30,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   void _submit() async {
     if (_formKey.currentState!.validate()) {
-      // استدعاء دالة التسجيل بالبارامترات المسماة الصحيحة
       await ref.read(authControllerProvider.notifier).register(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
@@ -38,8 +37,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             phone: _phoneController.text.trim(),
             role: _selectedRole,
           );
-      
-      // إذا لم يحدث خطأ، سيقوم نظام التوجيه GoRouter بنقل المستخدم تلقائياً بناءً على حالته
     }
   }
 
@@ -48,7 +45,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.watch(authControllerProvider);
     final isLoading = authState.isLoading;
 
-    // الاستماع لأي أخطاء لإظهارها للمستخدم
     ref.listen(authControllerProvider, (_, next) {
       next.whenOrNull(
         error: (error, stackTrace) {
@@ -87,7 +83,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // حقل الاسم الكامل
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -100,7 +95,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // حقل البريد الإلكتروني
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -114,7 +108,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // حقل رقم الهاتف
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
@@ -128,7 +121,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // حقل كلمة المرور
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
@@ -142,39 +134,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // اختيار نوع الحساب (الدور)
-                  DropdownButtonFormField<UserRole>(
-                    value: _selectedRole,
+                  InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'نوع الحساب',
                       prefixIcon: Icon(Icons.badge),
                       border: OutlineInputBorder(),
                     ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: UserRole.customer,
-                        child: Text('زبون (Customer)'),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<UserRole>(
+                        value: _selectedRole,
+                        isDense: true,
+                        items: const [
+                          DropdownMenuItem(
+                            value: UserRole.customer,
+                            child: Text('زبون (Customer)'),
+                          ),
+                          DropdownMenuItem(
+                            value: UserRole.merchant,
+                            child: Text('تاجر (Merchant)'),
+                          ),
+                          DropdownMenuItem(
+                            value: UserRole.driver,
+                            child: Text('سائق (Driver)'),
+                          ),
+                        ],
+                        onChanged: (role) {
+                          if (role != null) {
+                            setState(() {
+                              _selectedRole = role;
+                            });
+                          }
+                        },
                       ),
-                      DropdownMenuItem(
-                        value: UserRole.merchant,
-                        child: Text('تاجر (Merchant)'),
-                      ),
-                      DropdownMenuItem(
-                        value: UserRole.driver,
-                        child: Text('سائق (Driver)'),
-                      ),
-                    ],
-                    onChanged: (role) {
-                      if (role != null) {
-                        setState(() {
-                          _selectedRole = role;
-                        });
-                      }
-                    },
+                    ),
                   ),
                   const SizedBox(height: 24),
 
-                  // زر إنشاء الحساب
                   ElevatedButton(
                     onPressed: isLoading ? null : _submit,
                     style: ElevatedButton.styleFrom(

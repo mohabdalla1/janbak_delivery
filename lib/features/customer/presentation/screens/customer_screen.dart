@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:janbak_delivery/features/auth/data/repositories/auth_repository.dart';
+import 'package:janbak_delivery/features/auth/data/repositories/auth_repository_impl.dart';
 
 class CustomerScreen extends ConsumerWidget {
   const CustomerScreen({super.key});
@@ -45,11 +45,27 @@ class CustomerScreen extends ConsumerWidget {
   }
 
   List<Widget> _buildFeatureCards() {
-    return [
-      _FeatureCard(title: 'المتاجر القريبة', icon: Icons.store, color: Colors.orange),
-      _FeatureCard(title: 'طلباتي السابقة', icon: Icons.history, color: Colors.blue),
-      _FeatureCard(title: 'السلة', icon: Icons.shopping_cart, color: Colors.green),
-      _FeatureCard(title: 'الملف الشخصي', icon: Icons.person, color: Colors.purple),
+    return const [
+      _FeatureCard(
+        title: 'المتاجر القريبة',
+        icon: Icons.store,
+        color: Colors.orange,
+      ),
+      _FeatureCard(
+        title: 'طلباتي السابقة',
+        icon: Icons.history,
+        color: Colors.blue,
+      ),
+      _FeatureCard(
+        title: 'السلة',
+        icon: Icons.shopping_cart,
+        color: Colors.green,
+      ),
+      _FeatureCard(
+        title: 'الملف الشخصي',
+        icon: Icons.person,
+        color: Colors.purple,
+      ),
     ];
   }
 }
@@ -59,13 +75,19 @@ class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _FeatureCard({required this.title, required this.icon, required this.color});
+  const _FeatureCard({
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: InkWell(
         onTap: () {},
         borderRadius: BorderRadius.circular(12),
@@ -74,7 +96,13 @@ class _FeatureCard extends StatelessWidget {
           children: [
             Icon(icon, size: 48, color: color),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),

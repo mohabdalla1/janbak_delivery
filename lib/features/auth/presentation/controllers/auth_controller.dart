@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:janbak_delivery/features/auth/data/repositories/auth_repository.dart';
 import 'package:janbak_delivery/features/auth/domain/models/user_model.dart';
+import 'package:janbak_delivery/features/auth/data/repositories/auth_repository_impl.dart';
 
 // المزود الخاص بالتحكم في عمليات المصادقة (تسجيل وتوثيق)
 final authControllerProvider = StateNotifierProvider<AuthController, AsyncValue<void>>((ref) {
